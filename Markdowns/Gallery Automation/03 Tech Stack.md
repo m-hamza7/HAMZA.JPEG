@@ -12,7 +12,9 @@
 ### Key Frontend Choices
 - **No CSS framework** — full control over the dark, editorial aesthetic
 - **Vite** over CRA — much faster HMR and build times
-- **`useMemo`** for tile/featured data — prevents re-computation on re-render
+- **`useMemo`** for tile/featured/grid data — prevents re-computation on re-render
+- **`VITE_API_URL`** env var — points to the Express API (dev: `http://localhost:5000`)
+- **15 s polling** — `useEffect` + `setInterval` for live gallery updates without WebSockets
 
 ---
 

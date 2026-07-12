@@ -14,6 +14,9 @@ Stores metadata for every uploaded image. The actual file lives in Supabase Stor
 | `public_url` | `text` | NOT NULL | Full public CDN URL of the image |
 | `category` | `text` | NOT NULL | User-supplied category (e.g. "Street") |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` | Upload timestamp |
+| `is_featured` | `boolean` | NOT NULL, default `false` | Whether photo appears in Featured section |
+| `caption` | `text` | nullable | Short caption under featured card |
+| `story` | `text` | nullable | Long narrative shown in featured lightbox |
 
 ### Indexes
 
@@ -31,7 +34,7 @@ Optimises the `GET /photos` query which orders by `created_at DESC`.
 2. Paste the contents of `backend/supabase_migration.sql`
 3. Click **Run**
 
-The migration is idempotent — it uses `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`.
+The migration is idempotent — it uses `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and `ADD COLUMN IF NOT EXISTS`.
 
 ---
 
@@ -51,6 +54,11 @@ CREATE TABLE IF NOT EXISTS public.photos (
 
 CREATE INDEX IF NOT EXISTS photos_created_at_desc
   ON public.photos (created_at DESC);
+
+ALTER TABLE public.photos
+  ADD COLUMN IF NOT EXISTS is_featured boolean     NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS caption     text,
+  ADD COLUMN IF NOT EXISTS story       text;
 
 ALTER TABLE public.photos ENABLE ROW LEVEL SECURITY;
 ```
@@ -84,15 +92,24 @@ RLS is **enabled** on the table. The backend uses the **service-role key** which
 
 ---
 
-## Future Schema Additions (Phase 2+)
+## Frontend Usage
 
-> Do not add these yet — they are planned for future versions.
+| Column | Gallery section | Featured section |
+|--------|----------------|------------------|
+| `public_url` | Tile image + lightbox | Card image + lightbox |
+| `category` | Tile label + lightbox meta | Card title |
+| `is_featured` | — | Filter: `is_featured = true` |
+| `caption` | — | Text below featured card |
+| `story` | — | Right panel in featured lightbox |
 
-- `caption` (text) — short caption for the photo
-- `story` (text) — longer narrative text shown in the lightbox
+---
+
+## Future Schema Additions
+
 - `hashtags` (text[]) — array of tags
 - `instagram_id` (text) — link to the original Instagram post
 - `ai_metadata` (jsonb) — AI-generated tags / descriptions
+- `sort_order` (integer) — manual gallery ordering
 
 ---
 

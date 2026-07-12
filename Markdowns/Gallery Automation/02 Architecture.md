@@ -33,7 +33,7 @@ POST /photos/upload
   │
   ├─▶ upload.js (Multer)      → validate MIME type, max size, keep in memory
   ├─▶ validate.js             → ensure file + category present
-  ├─▶ photoController.js      → extract req.file + req.body
+  ├─▶ photoController.js      → extract req.file + req.body (category, is_featured, caption, story)
   ├─▶ photoService.js         → orchestrate upload + DB insert
   │     ├─▶ utils/storage.js  → build UUID path, upload buffer to Supabase Storage
   │     └─▶ supabase DB       → INSERT into photos table
@@ -46,8 +46,18 @@ POST /photos/upload
 GET /photos
   │
   ├─▶ photoController.js → photoService.getAllPhotos()
-  ├─▶ supabase DB        → SELECT id, public_url, category, created_at ORDER BY created_at DESC
+  ├─▶ supabase DB        → SELECT id, public_url, category, is_featured, caption, story, created_at
+  │                          ORDER BY created_at DESC
   └─▶ 200 JSON array
+```
+
+## Frontend Data Flow
+
+```
+GET /photos (polled every 15 s)
+  │
+  ├─▶ All photos        → Gallery grid (30 fixed slots, empty cells for unfilled)
+  └─▶ is_featured=true → Featured feed (caption + story lightbox)
 ```
 
 ## Request Flow — Delete

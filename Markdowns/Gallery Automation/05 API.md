@@ -31,15 +31,19 @@ Returns all photos ordered by **newest first**.
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "public_url": "https://xyz.supabase.co/storage/v1/object/public/portfolio/abc-photo.jpg",
     "category": "Street",
+    "is_featured": true,
+    "caption": "A quiet street, caught in the in-between hour.",
+    "story": "This was taken on a mid-week afternoon when the lane was almost empty...",
     "created_at": "2024-06-01T10:00:00.000Z"
-  },
-  ...
+  }
 ]
 ```
 
 **Notes**
-- Only these 4 fields are returned (not `filename` or `storage_path`)
+- Returns 7 fields (not `filename` or `storage_path`)
+- `is_featured` defaults to `false`; `caption` and `story` may be `null`
 - Empty array `[]` if no photos exist
+- Frontend filters `is_featured = true` for the Featured section
 
 ---
 
@@ -55,6 +59,9 @@ Upload a new photo to the gallery.
 |-------|------|----------|-------|
 | `image` | File | ✅ | Must be an image (jpeg, png, webp, gif, avif, heic) |
 | `category` | String | ✅ | Cannot be blank. E.g. `Street`, `Portrait`, `Architecture` |
+| `is_featured` | String | ❌ | Set to `"true"` to show in Featured section |
+| `caption` | String | ❌ | Short caption under featured card |
+| `story` | String | ❌ | Long narrative in featured lightbox |
 
 **Response `201`** — full inserted record
 ```json
@@ -64,15 +71,28 @@ Upload a new photo to the gallery.
   "storage_path": "abc123-photo.jpg",
   "public_url": "https://xyz.supabase.co/storage/v1/object/public/portfolio/abc123-photo.jpg",
   "category": "Street",
+  "is_featured": true,
+  "caption": "A quiet street, caught in the in-between hour.",
+  "story": "This was taken on a mid-week afternoon...",
   "created_at": "2024-06-01T10:00:00.000Z"
 }
 ```
 
-**cURL Example**
+**cURL Example — standard upload**
 ```bash
 curl -X POST http://localhost:5000/photos/upload \
   -F "image=@/path/to/photo.jpg" \
   -F "category=Street"
+```
+
+**cURL Example — featured upload**
+```bash
+curl -X POST http://localhost:5000/photos/upload \
+  -F "image=@/path/to/photo.jpg" \
+  -F "category=Street" \
+  -F "is_featured=true" \
+  -F "caption=A quiet street, caught in the in-between hour." \
+  -F "story=This was taken on a mid-week afternoon when the lane was almost empty..."
 ```
 
 **Error Responses**
@@ -142,6 +162,9 @@ Point an **HTTP Request** node at `POST /photos/upload`:
 | Body Content Type | Form-Data/Multipart |
 | Field `image` | Binary file input |
 | Field `category` | Expression or static string |
+| Field `is_featured` | `"true"` (optional) |
+| Field `caption` | String (optional) |
+| Field `story` | String (optional) |
 
 No backend changes are required when n8n is connected.
 

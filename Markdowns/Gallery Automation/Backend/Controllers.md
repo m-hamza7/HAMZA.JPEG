@@ -30,6 +30,7 @@ const getPhotos = async (req, res, next) => {
 **Flow:**
 - Calls `photoService.getAllPhotos()`
 - Returns the array as JSON with status `200`
+- Response includes `is_featured`, `caption`, `story`
 - Any error is forwarded to the error handler
 
 ---
@@ -47,9 +48,16 @@ By the time this runs, Multer and `validateUpload` middleware have already:
 const uploadPhoto = async (req, res, next) => {
   try {
     const { buffer, mimetype, originalname } = req.file;
-    const { category } = req.body;
+    const { category, is_featured, caption, story } = req.body;
 
-    const photo = await photoService.uploadPhoto(buffer, mimetype, originalname, category);
+    const photo = await photoService.uploadPhoto(
+      buffer, mimetype, originalname, category,
+      {
+        isFeatured: is_featured === 'true',
+        caption:    caption?.trim() || null,
+        story:      story?.trim()   || null,
+      }
+    );
     return res.status(201).json(photo);
   } catch (err) {
     next(err);
@@ -59,6 +67,7 @@ const uploadPhoto = async (req, res, next) => {
 
 **Flow:**
 - Destructures file properties from `req.file`
+- Extracts optional `is_featured`, `caption`, `story` from `req.body`
 - Passes them to `photoService.uploadPhoto()`
 - Returns the inserted record with status `201`
 

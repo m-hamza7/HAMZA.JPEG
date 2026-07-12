@@ -8,7 +8,7 @@
 
 | Service | URL |
 |---------|-----|
-| Frontend (Vite) | `http://localhost:5173` |
+| Frontend (Vite) | `http://localhost:5173` (or next available port) |
 | Backend (Express) | `http://localhost:5000` |
 | Supabase | Cloud (always on) |
 
@@ -21,21 +21,30 @@ pnpm run dev
 cd backend && npm run dev
 ```
 
+### Frontend `.env` (project root)
+```
+VITE_API_URL=http://localhost:5000
+```
+
 ---
 
 ## Pre-Deployment Checklist
 
 ### Supabase
-- [ ] Run `supabase_migration.sql` in SQL Editor
-- [ ] Create `portfolio` bucket (Public)
-- [ ] Copy `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from Dashboard → Settings → API
+- [x] Run `supabase_migration.sql` in SQL Editor
+- [x] Create `portfolio` bucket (Public)
+- [x] Copy `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from Dashboard → Settings → API
 
 ### Backend `.env`
-- [ ] `SUPABASE_URL` set
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` set
-- [ ] `SUPABASE_BUCKET=portfolio`
+- [x] `SUPABASE_URL` set
+- [x] `SUPABASE_SERVICE_ROLE_KEY` set
+- [x] `SUPABASE_BUCKET=portfolio`
 - [ ] `PORT=5000` (or platform-assigned)
 - [ ] `ALLOWED_ORIGIN=https://your-frontend-domain.com` (restrict CORS in production)
+
+### Frontend `.env`
+- [x] `VITE_API_URL=http://localhost:5000` (dev)
+- [ ] `VITE_API_URL=https://your-backend.railway.app` (production)
 
 ---
 
@@ -76,7 +85,7 @@ The server listens on `process.env.PORT` — Render/Railway set this automatical
 6. Add env var: `VITE_API_URL=https://your-backend.railway.app`
 7. Deploy
 
-> The frontend currently uses placeholder tiles — before deploying, update `App.jsx` to fetch from `GET /photos`.
+> The frontend fetches from `GET /photos` via `VITE_API_URL` and polls every 15 seconds.
 
 ---
 

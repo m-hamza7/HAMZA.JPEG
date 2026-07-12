@@ -60,15 +60,15 @@
 
 ## Blockers / Pending
 
-- [ ] Fill in real Supabase credentials in `backend/.env`
-- [ ] Run `supabase_migration.sql` in Supabase SQL Editor
-- [ ] Create `portfolio` bucket in Supabase Storage (set to Public)
-- [ ] Wire frontend `App.jsx` to fetch real data from `GET /photos`
+- [x] Fill in real Supabase credentials in `backend/.env`
+- [x] Run `supabase_migration.sql` in Supabase SQL Editor
+- [x] Create `portfolio` bucket in Supabase Storage (set to Public)
+- [x] Wire frontend `App.jsx` to fetch real data from `GET /photos`
 
 ---
 
 ## Tomorrow
 
-- Set up Supabase project and run migration
-- Test upload with cURL or Postman
-- Begin connecting the frontend to the real API
+- ~~Set up Supabase project and run migration~~
+- ~~Test upload with cURL or Postman~~
+- ~~Begin connecting the frontend to the real API~~

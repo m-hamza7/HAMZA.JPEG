@@ -1,15 +1,25 @@
 # 08 — Future Roadmap
 
-> This document tracks planned features beyond MVP. Nothing here is implemented yet.
+> Tracks planned features beyond the current working MVP.
 
 ---
 
-## Phase 2 — Automation & Connection
+## Completed (since Day 1)
+
+| Feature | Status |
+|---------|--------|
+| Frontend ↔ Backend wiring | ✅ `GET /photos`, 15 s polling |
+| `caption` / `story` / `is_featured` columns | ✅ In DB + API + frontend |
+| Dynamic Featured section | ✅ Filtered from API |
+| Phone-style gallery grid | ✅ 30 slots, empty cells |
+
+---
+
+## Phase 2 — Automation & Production
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | n8n workflow | Auto-upload from folder / Google Drive | High |
-| Frontend ↔ Backend wiring | Replace placeholder tiles with real `GET /photos` data | High |
 | API key auth | Secure the upload endpoint with a Bearer token | High |
 | Production deployment | Backend on Railway/Render, frontend on Vercel | High |
 | CORS lockdown | Restrict `ALLOWED_ORIGIN` to production domain | Medium |
@@ -20,10 +30,9 @@
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| Caption field | Add `caption` column to `photos` table | High |
-| Story field | Add `story` column — shown in lightbox | High |
 | Category filtering | Filter gallery by category on the frontend | Medium |
 | Instagram import | OAuth import of existing Instagram photos | Low |
+| `PATCH /photos/:id` | Edit category, caption, story, featured flag | Medium |
 
 ---
 
@@ -57,7 +66,6 @@
 - [ ] Add request logging middleware (Morgan)
 - [ ] Add rate limiting (express-rate-limit) on upload endpoint
 - [ ] Serve optimised WebP thumbnails instead of raw originals
-- [ ] Add `PATCH /photos/:id` for editing category / caption
 
 ---
 

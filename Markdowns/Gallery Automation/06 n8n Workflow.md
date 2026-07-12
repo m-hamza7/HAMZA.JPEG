@@ -22,8 +22,11 @@ n8n will automate the image upload pipeline. Instead of manually calling the API
 [HTTP Request Node]
   POST http://your-server:5000/photos/upload
   Body: multipart/form-data
-    - image: (binary file)
-    - category: (expression or static)
+    - image:       (binary file)
+    - category:    (expression or static)
+    - is_featured: "true" (optional)
+    - caption:     (optional)
+    - story:       (optional)
         │
         ▼
 [Success → Log / Notify]
@@ -48,6 +51,9 @@ n8n will automate the image upload pipeline. Instead of manually calling the API
 |-----|------|-------|
 | `image` | Binary | `{{ $binary.data }}` |
 | `category` | String | `"Street"` or dynamic expression |
+| `is_featured` | String | `"true"` (optional — marks as featured) |
+| `caption` | String | Short caption (optional) |
+| `story` | String | Long narrative (optional) |
 
 ---
 

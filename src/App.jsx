@@ -1,80 +1,188 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Gallery from "./components/Gallery.jsx";
 import Lightbox from "./components/Lightbox.jsx";
+import FeaturedFeed from "./components/FeaturedFeed.jsx";
+import PasswordModal from "./components/PasswordModal.jsx";
+import UploadPanel from "./components/UploadPanel.jsx";
+import EditPhotoModal from "./components/EditPhotoModal.jsx";
+import LinksEditor from "./components/LinksEditor.jsx";
+import { fetchPhotos, reorderPhotos } from "./api/photos.js";
+import {
+  GRID_SIZE,
+  POLL_MS,
+  EDIT_PASSWORD,
+  DEFAULT_LINKS,
+  LINKS_STORAGE_KEY,
+  EDIT_SESSION_KEY,
+} from "./constants.js";
 
-const buildTiles = () => {
-  const palette = [
-    "#0f1115",
-    "#141821",
-    "#1a212b",
-    "#202a35",
-    "#171b24",
-    "#1e2430",
-    "#13161d",
-    "#242d39",
-    "#1b2029",
-    "#191f28",
-    "#12161c",
-    "#222a34"
-  ];
+function loadLinks() {
+  try {
+    const stored = localStorage.getItem(LINKS_STORAGE_KEY);
+    return stored ? { ...DEFAULT_LINKS, ...JSON.parse(stored) } : { ...DEFAULT_LINKS };
+  } catch {
+    return { ...DEFAULT_LINKS };
+  }
+}
 
-  return Array.from({ length: 18 }, (_, index) => ({
-    id: index + 1,
-    title: `Frame ${String(index + 1).padStart(2, "0")}`,
-    tone: palette[index % palette.length]
-  }));
-};
+function sortGallery(photos) {
+  return [...photos].sort((a, b) => {
+    const ao = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+}
 
-const buildFeatured = () => {
-  const tones = ["#0f1218", "#151b24", "#1c2430", "#202a35", "#18202a", "#222c38"];
-
-  return Array.from({ length: 6 }, (_, index) => ({
-    id: `featured-${index + 1}`,
-    title: `Featured ${String(index + 1).padStart(2, "0")}`,
-    caption:
-      "A quiet moment, captured on the move. Swap this caption with your own story.",
-    story:
-      "This frame was captured just before sunset, where the light shifted from warm to deep blue within minutes. Replace this with the real story behind your image.",
-    tone: tones[index % tones.length]
-  }));
-};
+function sortFeatured(photos) {
+  return photos
+    .filter((p) => p.is_featured)
+    .sort((a, b) => {
+      const ao = a.featured_sort_order ?? Number.MAX_SAFE_INTEGER;
+      const bo = b.featured_sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (ao !== bo) return ao - bo;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+}
 
 export default function App() {
-  const tiles = useMemo(() => buildTiles(), []);
-  const featured = useMemo(() => buildFeatured(), []);
   const [section, setSection] = useState("featured");
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(null);
   const [activeFeaturedIndex, setActiveFeaturedIndex] = useState(null);
+
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  const [isEditMode, setIsEditMode] = useState(
+    () => sessionStorage.getItem(EDIT_SESSION_KEY) === "true"
+  );
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showUploadPanel, setShowUploadPanel] = useState(false);
+  const [showLinksEditor, setShowLinksEditor] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState(null);
+  const [siteLinks, setSiteLinks] = useState(loadLinks);
+
+  const refreshPhotos = useCallback(async () => {
+    try {
+      const data = await fetchPhotos();
+      setPhotos(data);
+      setFetchError(null);
+    } catch (err) {
+      setFetchError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshPhotos();
+    if (isEditMode) return undefined;
+
+    const interval = setInterval(refreshPhotos, POLL_MS);
+    return () => clearInterval(interval);
+  }, [refreshPhotos, isEditMode]);
+
+  const galleryPhotos = useMemo(() => sortGallery(photos), [photos]);
+  const featuredPhotos = useMemo(() => sortFeatured(photos), [photos]);
+
+  const featured = useMemo(
+    () =>
+      featuredPhotos.map((p) => ({
+        id: p.id,
+        title: p.category,
+        caption: p.caption,
+        story: p.story,
+        src: p.public_url,
+        tone: "#141821",
+        raw: p,
+      })),
+    [featuredPhotos]
+  );
+
+  const tiles = useMemo(
+    () =>
+      galleryPhotos.map((p) => ({
+        id: p.id,
+        title: p.category,
+        src: p.public_url,
+        tone: "#141821",
+        raw: p,
+      })),
+    [galleryPhotos]
+  );
+
+  const grid = useMemo(() => {
+    const blanks = Math.max(0, GRID_SIZE - tiles.length);
+    return [...tiles, ...Array(blanks).fill(null)];
+  }, [tiles]);
+
+  const handlePasswordSubmit = (password, setError) => {
+    if (password === EDIT_PASSWORD) {
+      setIsEditMode(true);
+      sessionStorage.setItem(EDIT_SESSION_KEY, "true");
+      setShowPasswordModal(false);
+      return;
+    }
+    setError("Incorrect password.");
+  };
+
+  const exitEditMode = () => {
+    setIsEditMode(false);
+    sessionStorage.removeItem(EDIT_SESSION_KEY);
+    setShowUploadPanel(false);
+    setShowLinksEditor(false);
+    setEditingPhoto(null);
+    refreshPhotos();
+  };
+
+  const handleGalleryReorder = async (ids) => {
+    const data = await reorderPhotos({ gallery: ids });
+    setPhotos(data);
+  };
+
+  const handleFeaturedReorder = async (ids) => {
+    const data = await reorderPhotos({ featured: ids });
+    setPhotos(data);
+  };
+
+  const handlePhotoSaved = (updated) => {
+    setPhotos((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    refreshPhotos();
+  };
+
+  const handlePhotoDeleted = (id) => {
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    refreshPhotos();
+  };
+
+  const handleLinksSave = (links) => {
+    setSiteLinks(links);
+    localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(links));
+  };
 
   const handleClose = () => {
     setActiveGalleryIndex(null);
     setActiveFeaturedIndex(null);
   };
 
-  const handleGalleryOpen = (index) => setActiveGalleryIndex(index);
+  const handleGalleryOpen = (realIndex) => setActiveGalleryIndex(realIndex);
   const handleGalleryPrev = () =>
-    setActiveGalleryIndex((current) =>
-      current === 0 ? tiles.length - 1 : current - 1
-    );
+    setActiveGalleryIndex((i) => (i === 0 ? tiles.length - 1 : i - 1));
   const handleGalleryNext = () =>
-    setActiveGalleryIndex((current) =>
-      current === tiles.length - 1 ? 0 : current + 1
-    );
+    setActiveGalleryIndex((i) => (i === tiles.length - 1 ? 0 : i + 1));
 
   const handleFeaturedOpen = (index) => setActiveFeaturedIndex(index);
   const handleFeaturedPrev = () =>
-    setActiveFeaturedIndex((current) =>
-      current === 0 ? featured.length - 1 : current - 1
-    );
+    setActiveFeaturedIndex((i) => (i === 0 ? featured.length - 1 : i - 1));
   const handleFeaturedNext = () =>
-    setActiveFeaturedIndex((current) =>
-      current === featured.length - 1 ? 0 : current + 1
-    );
+    setActiveFeaturedIndex((i) => (i === featured.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="app">
+    <div className={`app ${isEditMode ? "app--edit" : ""}`}>
       <nav className="navbar">
         <div className="brand">Hmza</div>
+
         <div className="nav-actions">
           <button
             className={`nav-button ${section === "featured" ? "active" : ""}`}
@@ -92,76 +200,140 @@ export default function App() {
           </button>
           <a
             className="nav-link"
-            href="https://www.instagram.com/m.hamza.jpeg"
+            href={siteLinks.instagramUrl}
             target="_blank"
             rel="noreferrer"
           >
             Instagram
           </a>
+
+          <button
+            className={`nav-button nav-button--edit ${isEditMode ? "active" : ""}`}
+            type="button"
+            onClick={() => (isEditMode ? exitEditMode() : setShowPasswordModal(true))}
+          >
+            {isEditMode ? "Viewer mode" : "Edit mode"}
+          </button>
         </div>
       </nav>
 
-      {section === "featured" ? (
+      {isEditMode && (
+        <div className="edit-toolbar">
+          <span className="edit-toolbar-label">Editing</span>
+          <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowUploadPanel(true)}>
+            Upload photo
+          </button>
+          <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowLinksEditor(true)}>
+            Edit links
+          </button>
+          <span className="edit-toolbar-hint">Drag items to reorder · click Edit on any photo</span>
+        </div>
+      )}
+
+      {section === "featured" && (
         <section className="featured">
           <header className="section-header">
             <p className="eyebrow">Featured Stories</p>
-            <h1>Instagram-style frames with narrative focus.</h1>
+            <h1>Frames that carry a narrative.</h1>
             <p className="subtitle">
-              Each photo pairs with a caption and a deeper story in the lightbox.
+              Each photo pairs with a story in the lightbox. Tap any card to read it.
             </p>
           </header>
-          <div className="featured-feed">
-            {featured.map((post, index) => (
-              <article className="featured-card" key={post.id}>
-                <button
-                  className="featured-media"
-                  type="button"
-                  style={{ background: post.tone }}
-                  onClick={() => handleFeaturedOpen(index)}
-                >
-                  <span className="featured-title">{post.title}</span>
-                </button>
-                <p className="featured-caption">{post.caption}</p>
-              </article>
-            ))}
-          </div>
+
+          {loading && <p className="gallery-status">Loading…</p>}
+
+          {!loading && (
+            <FeaturedFeed
+              items={featured}
+              editMode={isEditMode}
+              onOpen={handleFeaturedOpen}
+              onEdit={setEditingPhoto}
+              onReorder={handleFeaturedReorder}
+            />
+          )}
         </section>
-      ) : (
+      )}
+
+      {section === "gallery" && (
         <>
           <header className="hero">
             <p className="eyebrow">Mobile Photography Archive</p>
-            <h1>Minimal gallery for bold, focused imagery.</h1>
+            <h1>{tiles.length} frame{tiles.length !== 1 ? "s" : ""} captured.</h1>
             <p className="subtitle">
-              Replace these tiles with your favorite mobile captures. Tap any frame
-              to enlarge and navigate through the collection.
+              {loading
+                ? "Loading…"
+                : fetchError
+                ? "Could not reach the server."
+                : isEditMode
+                ? "Drag tiles to reorder. Click Edit to update or delete."
+                : `${GRID_SIZE - tiles.length} slot${GRID_SIZE - tiles.length !== 1 ? "s" : ""} remaining.`}
             </p>
           </header>
 
-          <Gallery tiles={tiles} onOpen={handleGalleryOpen} />
+          <Gallery
+            grid={grid}
+            tiles={tiles}
+            editMode={isEditMode}
+            onOpen={handleGalleryOpen}
+            onEdit={setEditingPhoto}
+            onReorder={handleGalleryReorder}
+          />
         </>
       )}
 
-      <Lightbox
-        tile={activeGalleryIndex !== null ? tiles[activeGalleryIndex] : null}
-        onClose={handleClose}
-        onPrev={handleGalleryPrev}
-        onNext={handleGalleryNext}
-      />
+      {!isEditMode && (
+        <>
+          <Lightbox
+            tile={activeGalleryIndex !== null ? tiles[activeGalleryIndex] : null}
+            onClose={handleClose}
+            onPrev={handleGalleryPrev}
+            onNext={handleGalleryNext}
+          />
 
-      <Lightbox
-        tile={activeFeaturedIndex !== null ? featured[activeFeaturedIndex] : null}
-        onClose={handleClose}
-        onPrev={handleFeaturedPrev}
-        onNext={handleFeaturedNext}
-      />
+          <Lightbox
+            tile={activeFeaturedIndex !== null ? featured[activeFeaturedIndex] : null}
+            onClose={handleClose}
+            onPrev={handleFeaturedPrev}
+            onNext={handleFeaturedNext}
+          />
+        </>
+      )}
 
       <footer className="footer">
-        <span>Contact: muhmd.hamza0@gmail.com</span>
+        <span>Contact: {siteLinks.contactEmail}</span>
         <span className="footer-divider">/</span>
-        <a href="https://www.instagram.com/m.hamza.jpeg" target="_blank" rel="noreferrer">
-          @m.hamza.jpeg
+        <a href={siteLinks.instagramUrl} target="_blank" rel="noreferrer">
+          {siteLinks.instagramHandle}
         </a>
       </footer>
+
+      {showPasswordModal && (
+        <PasswordModal
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={handlePasswordSubmit}
+        />
+      )}
+
+      {isEditMode && showUploadPanel && (
+        <UploadPanel onClose={() => setShowUploadPanel(false)} onUploaded={refreshPhotos} />
+      )}
+
+      {isEditMode && showLinksEditor && (
+        <LinksEditor
+          links={siteLinks}
+          onClose={() => setShowLinksEditor(false)}
+          onSave={handleLinksSave}
+        />
+      )}
+
+      {isEditMode && editingPhoto && (
+        <EditPhotoModal
+          photo={editingPhoto}
+          onClose={() => setEditingPhoto(null)}
+          onSaved={handlePhotoSaved}
+          onDeleted={handlePhotoDeleted}
+        />
+      )}
     </div>
   );
 }

@@ -39,17 +39,17 @@ npm install
 
 ### 5. Configure `.env`
 
-```bash
-# Inside backend/
-cp .env.example .env
-```
-
-Edit `.env`:
+**Backend** (`backend/.env`):
 ```
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 SUPABASE_BUCKET=portfolio
 PORT=5000
+```
+
+**Frontend** (project root `.env`):
+```
+VITE_API_URL=http://localhost:5000
 ```
 
 ### 6. Run the server

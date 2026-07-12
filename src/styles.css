@@ -34,8 +34,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
 }
 
 .brand {
@@ -66,6 +68,17 @@ body {
 .nav-button.active {
   border-color: rgba(90, 160, 255, 0.45);
   color: var(--accent);
+}
+
+.nav-button--edit {
+  margin-left: 4px;
+  border-color: rgba(90, 160, 255, 0.25);
+}
+
+.app--edit {
+  outline: 1px solid rgba(90, 160, 255, 0.12);
+  outline-offset: 8px;
+  border-radius: 4px;
 }
 
 .nav-link {
@@ -103,8 +116,9 @@ body {
   color: var(--muted);
 }
 
-.hero h1 {
-  font-size: clamp(32px, 4vw, 48px);
+.hero h1,
+.section-header h1 {
+  font-size: clamp(28px, 4vw, 44px);
   line-height: 1.05;
 }
 
@@ -116,8 +130,8 @@ body {
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
 }
 
 .featured {
@@ -172,36 +186,52 @@ body {
 }
 
 .tile {
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 0;
-  min-height: 220px;
-  padding: 20px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
   cursor: pointer;
-  text-align: left;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  background: #0f1218;
+  transition: opacity 0.2s ease;
+  display: block;
+  width: 100%;
 }
 
 .tile:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: rgba(90, 160, 255, 0.45);
+  opacity: 0.85;
 }
 
-.tile::after {
-  content: "";
+/* Subtle category label on hover */
+.tile:hover .tile-category {
+  opacity: 1;
+}
+
+.tile-category {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  text-align: left;
 }
 
-.tile-label {
-  position: relative;
-  z-index: 1;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
+/* Empty slot — dark cell, not interactive */
+.tile--empty {
+  aspect-ratio: 1 / 1;
+  background: #0b0d12;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: default;
+  pointer-events: none;
 }
 
 .lightbox {
@@ -252,6 +282,8 @@ body {
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  position: relative;
 }
 
 .lightbox-body {
@@ -353,7 +385,8 @@ body {
 
 @media (max-width: 720px) {
   .app {
-    padding: 32px 18px 64px;
+    padding: 24px 14px 64px;
+    gap: 24px;
   }
 
   .navbar {
@@ -364,6 +397,34 @@ body {
 
   .nav-actions {
     flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .nav-button--edit {
+    margin-left: 0;
+  }
+
+  .edit-toolbar-hint {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .modal-card {
+    padding: 20px;
+  }
+
+  .modal-actions-spread {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-actions-spread .modal-actions {
+    justify-content: flex-end;
+  }
+
+  /* Gallery stays 3-column on mobile — phone gallery feel */
+  .gallery {
+    gap: 2px;
   }
 
   .featured-media {
@@ -375,7 +436,7 @@ body {
   }
 
   .lightbox-frame {
-    min-height: 320px;
+    min-height: 280px;
   }
 
   .lightbox-body.with-story {
@@ -395,4 +456,307 @@ body {
   .footer {
     gap: 8px;
   }
+}
+
+/* ── Image fills ──────────────────────────────────────────────────────────── */
+
+.tile-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.featured-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lightbox-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Lightbox meta (category label) ──────────────────────────────────────── */
+
+.lightbox-meta {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── Edit mode ───────────────────────────────────────────────────────────── */
+
+.edit-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--panel-soft);
+  border: 1px solid rgba(90, 160, 255, 0.2);
+}
+
+.edit-toolbar-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.edit-toolbar-hint {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tile-wrap {
+  position: relative;
+}
+
+.tile-wrap--edit {
+  cursor: grab;
+}
+
+.tile-wrap--edit:active {
+  cursor: grabbing;
+}
+
+.tile-wrap--edit .tile {
+  pointer-events: none;
+}
+
+.tile-wrap--edit .edit-actions--tile {
+  pointer-events: auto;
+}
+
+.featured-card--edit {
+  cursor: grab;
+}
+
+.featured-card--edit:active {
+  cursor: grabbing;
+}
+
+.featured-media-wrap {
+  position: relative;
+}
+
+.edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.edit-actions--tile {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  margin-top: 0;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.edit-chip {
+  background: rgba(11, 13, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--ink);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.edit-chip:hover {
+  border-color: rgba(90, 160, 255, 0.45);
+  color: var(--accent);
+}
+
+.edit-chip--hint {
+  cursor: default;
+  color: var(--muted);
+}
+
+.edit-preview {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.edit-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Modals (password, upload, edit, links) ────────────────────────────── */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 24px;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 8, 12, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 420px);
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 28px;
+  display: grid;
+  gap: 16px;
+}
+
+.modal-card-wide {
+  width: min(92vw, 520px);
+}
+
+.modal-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.modal-title {
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.modal-subtitle {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field-input {
+  background: var(--panel-soft);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: rgba(90, 160, 255, 0.45);
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.field-error {
+  color: #f87171;
+  font-size: 13px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.modal-actions-spread {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+  border-color: rgba(90, 160, 255, 0.45);
+  color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  border-color: rgba(90, 160, 255, 0.45);
+  color: var(--accent);
+}
+
+.btn-ghost {
+  color: var(--muted);
+}
+
+.btn-danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.gallery-status {
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 24px;
+  font-size: 1rem;
 }

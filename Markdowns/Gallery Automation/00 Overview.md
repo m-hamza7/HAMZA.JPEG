@@ -9,7 +9,7 @@
 
 A full-stack photography portfolio with an automated image pipeline:
 
-- **Frontend** — React + Vite gallery (dark, tile-based, lightbox)
+- **Frontend** — React + Vite gallery (dark, phone-style grid, featured stories, lightbox)
 - **Backend** — Node.js / Express REST API
 - **Storage** — Supabase Storage (S3-compatible)
 - **Database** — Supabase PostgreSQL (`photos` table)
@@ -21,6 +21,7 @@ A full-stack photography portfolio with an automated image pipeline:
 
 ```
 HMZA/
+├── .env                    ← Frontend env (VITE_API_URL)
 ├── src/                    ← React frontend (Vite)
 │   ├── components/
 │   │   ├── Gallery.jsx
@@ -39,6 +40,7 @@ HMZA/
 │   │   ├── utils/          ← Storage helpers
 │   │   ├── app.js
 │   │   └── server.js
+│   ├── .env                ← Backend secrets (gitignored)
 │   └── supabase_migration.sql
 │
 └── Markdowns/
@@ -52,9 +54,13 @@ HMZA/
 | Layer | Status |
 |-------|--------|
 | Frontend skeleton | ✅ Built |
-| Backend API (MVP) | ✅ Built |
-| Supabase schema | ⏳ Needs migration run |
-| Supabase Storage bucket | ⏳ Needs creation |
+| Frontend ↔ Backend wiring | ✅ Live (`GET /photos`, 15 s polling) |
+| Phone-style gallery grid (30 slots) | ✅ Built |
+| Featured stories (dynamic) | ✅ Built (`is_featured`, `caption`, `story`) |
+| Backend API (MVP) | ✅ Built & running |
+| Supabase schema | ✅ Migration written & run |
+| Supabase Storage bucket | ✅ `portfolio` (public) |
+| Supabase credentials (`.env`) | ✅ Configured |
 | n8n automation | 🔜 Future |
 | Production deployment | 🔜 Future |
 
