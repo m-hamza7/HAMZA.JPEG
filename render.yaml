@@ -1,0 +1,25 @@
+# Render Blueprint — backend API only
+# Docs: https://render.com/docs/blueprint-spec
+#
+# After pushing, connect this repo in Render → New → Blueprint
+# OR manually set Root Directory to "backend" on your existing Web Service.
+
+services:
+  - type: web
+    name: hmza-gallery-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_BUCKET
+        value: portfolio
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
